@@ -15,7 +15,7 @@ class Calendar(MycroftSkill):
 
     @intent_file_handler('calendar.intent')
     def handle_calendar(self, message):
-      print(USERNAME)
+      self.log.info("Username: " + USERNAME)
       self.speak_dialog('calendar')
         
 
