@@ -30,6 +30,8 @@ class Calendar(MycroftSkill):
       events = self.calendar.events()
       if len(events) != 0:
         next_event = events[0]
+        self.log.info(events[0])
+        self.speak("Next appointment: " + str(next_event))
       else: 
         self.speak("You have nothing to do.")
         
