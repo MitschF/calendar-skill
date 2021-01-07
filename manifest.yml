@@ -3,12 +3,15 @@
 # not require any dependencies, please delete this file before submitting a pull request.
 #
 # To use this file, uncomment the lines you need, and fill in the appropriate information.
-#
-# dependencies:
-#   # Pip dependencies on PyPI
-#   python:
-#     - requests
-#     - gensim
+
+
+dependencies:
+  # Pip dependencies on PyPI
+  python:
+    - dotenv
+    - caldav
+
+
 #
 #   # Install packages with the system package manager
 #   # This searches for the provided executable and uses the package names

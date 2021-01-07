@@ -1,22 +1,29 @@
 import os
 from dotenv import load_dotenv
 from mycroft import MycroftSkill, intent_file_handler
+import caldav
 
 from pathlib import Path
-env_path = Path('./auth') / '.env'
-load_dotenv(dotenv_path=env_path)
 
-USERNAME = os.getenv("USERNAME")
-PASSWORD = os.getenv("PASSWORD")
 
 class Calendar(MycroftSkill):
     def __init__(self):
-        MycroftSkill.__init__(self)
+      MycroftSkill.__init__(self)
 
-    @intent_file_handler('calendar.intent')
-    def handle_calendar(self, message):
-      self.log.info("Username: " + USERNAME)
-      self.speak_dialog('calendar')
+    def initialize(self):
+      # get USERNAME and PASSWORD from .env
+      load_dotenv()
+      self.USERNAME = os.getenv("USERNAME")
+      self.PASSWORD = os.getenv("PASSWORD")
+      self.URL = os.getenv("URL")
+      # open connection to calendar
+      # self.url = "https://" + self.USERNAME + ":" + self.PASSWORD + "@next.social-robot.info/nc/remote.php/dav"
+      self.client = caldav.DAVClient(url=self.URL, username=self.USERNAME, password=self.PASSWORD)
+      self.principal = self.client.principal()
+
+    @intent_file_handler('getAppointment.intent')
+    def get_next_appointment(self, message):
+      self.speak(str(self.principal.calendars()))
         
 
 
