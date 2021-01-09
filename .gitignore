@@ -2,4 +2,4 @@ __pycache__/
 *.qmlc
 settings.json
 .env
-
+test/

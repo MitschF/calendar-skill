@@ -2,9 +2,9 @@ import os
 from dotenv import load_dotenv
 from mycroft import MycroftSkill, intent_file_handler
 import caldav
-from icalendar import Calendar, Event
+from datetime import date
+from icalendar import Calendar as iCal
 
-from pathlib import Path
 
 
 class Calendar(MycroftSkill):
@@ -18,20 +18,25 @@ class Calendar(MycroftSkill):
       self.PASSWORD = os.getenv("PASSWORD")
       self.URL = os.getenv("URL")
       # open connection to calendar
-      # self.url = "https://" + self.USERNAME + ":" + self.PASSWORD + "@next.social-robot.info/nc/remote.php/dav"
       self.client = caldav.DAVClient(url=self.URL, username=self.USERNAME, password=self.PASSWORD)
       self.principal = self.client.principal()
       self.calendars = self.principal.calendars()
-      self.calendar = self.calendars[0]
-      self.log.info("USING CALENDAR: " + str(self.calendar))
+      self.cal = self.calendars[0]
+      self.log.info(date.today())
+      self.log.info("USING CALENDAR: " + str(self.cal))
 
     @intent_file_handler('getAppointment.intent')
     def get_next_appointment(self, message):
-      events = self.calendar.events()
-      if len(events) != 0:
-        next_event = events[0]
-        self.log.info(events[0])
-        self.speak("Next appointment: " + str(next_event))
+      next_events = self.cal.date_search(
+          start=date.today()
+      )
+      if len(next_events) != 0:
+        next_event = next_events[0]
+        result = iCal.from_ical(next_event.data)
+        for component in result.walk():
+          if component.name == "VEVENT":
+            result.summary = component.get('summary')
+        self.speak("Next appointment: " + result.summary)
       else: 
         self.speak("You have nothing to do.")
         
