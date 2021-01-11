@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from mycroft import MycroftSkill, intent_file_handler
 import caldav
-from datetime import date
+from datetime import date, datetime
 from icalendar import Calendar as iCal
 
 
@@ -28,7 +28,7 @@ class Calendar(MycroftSkill):
     @intent_file_handler('getAppointment.intent')
     def get_next_appointment(self, message):
       next_events = self.cal.date_search(
-          start=date.today()
+          start=datetime.now()
       )
       if len(next_events) != 0:
         next_event = next_events[0]
