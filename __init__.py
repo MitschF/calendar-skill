@@ -22,7 +22,6 @@ class Calendar(MycroftSkill):
       self.principal = self.client.principal()
       self.calendars = self.principal.calendars()
       self.cal = self.calendars[0]
-      self.log.info(date.today())
       self.log.info("USING CALENDAR: " + str(self.cal))
 
     @intent_file_handler('getAppointment.intent')
@@ -37,8 +36,11 @@ class Calendar(MycroftSkill):
           if component.name == "VEVENT":
             result.summary = component.get('summary')
         self.speak("Next appointment: " + result.summary)
+        # TODO: Uhrzeit / Datum ausgeben
       else: 
         self.speak("You have nothing to do.")
+      
+    # TODO: setAppointment
         
 
 
