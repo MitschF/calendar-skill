@@ -35,8 +35,8 @@ class Calendar(MycroftSkill):
         for component in result.walk():
           if component.name == "VEVENT":
             result.summary = component.get('summary')
-        self.speak("Next appointment: " + result.summary)
-        # TODO: Uhrzeit / Datum ausgeben
+            result.start = component.decoded('dtstart').strftime("%d.%m.%Y, %H:%M")
+        self.speak("Next appointment: " + result.summary + " at " + result.start)
       else: 
         self.speak("You have nothing to do.")
       
