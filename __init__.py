@@ -26,24 +26,31 @@ class Calendar(MycroftSkill):
 
     @intent_file_handler('getAppointment.intent')
     def get_next_appointment(self, message):
-      next_events = self.cal.date_search(
-          start=datetime.now()
-      )
-      if len(next_events) != 0:
-        next_event = next_events[0]
-        result = iCal.from_ical(next_event.data)
-        for component in result.walk():
-          if component.name == "VEVENT":
-            result.summary = component.get('summary')
-            result.start = component.decoded('dtstart').strftime("%d.%m.%Y, %H:%M")
-        self.speak("Next appointment: " + result.summary + " at " + result.start)
-      else: 
-        self.speak("You have nothing to do.")
+      events = self.cal.date_search(datetime.now())
+
+      if len(events) == 0:
+        self.speak("You have nothing to do!")
+      else:
+        event_list = []
+
+        for event in events:
+          e = event.instance.vevent
+          event_list.append(e)
+
+        event_list.sort(key=lambda e: e.dtstart.value.strftime("%Y-%m-%d, %H:%M"))
+        next_event = event_list[0]
+        if next_event.dtstart.value.strftime("%H:%M") == "00:00":
+          # This is an "allday" event
+          event_time = next_event.dtstart.value.strftime("%d.%m.%Y")
+          self.speak("Next Appointment: {event_summary} on {event_time}".format(event_time=event_time, event_summary=next_event.summary.value,))
+        else:
+          # This is a "normal" event
+          event_time = next_event.dtstart.value.strftime("%H:%M")
+          event_date = next_event.dtstart.value.strftime("%d.%m.%Y")
+          self.speak("Next Appointment: {event_summary} on {event_date} at {event_time}".format(event_time=event_time, event_date=event_date, event_summary=next_event.summary.value,))
       
     # TODO: setAppointment
         
-
-
 def create_skill():
     return Calendar()
 
