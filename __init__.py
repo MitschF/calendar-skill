@@ -41,13 +41,15 @@ class Calendar(MycroftSkill):
         next_event = event_list[0]
         if next_event.dtstart.value.strftime("%H:%M") == "00:00":
           # This is an "allday" event
-          event_time = next_event.dtstart.value.strftime("%d.%m.%Y")
-          self.speak("Next Appointment: {event_summary} on {event_time}".format(event_time=event_time, event_summary=next_event.summary.value,))
+          event_date = next_event.dtstart.value.strftime("%d.%m.%Y")
+          self.speak("Next Appointment: {event_summary} on {event_date}"
+          .format(event_date=event_date, event_summary=next_event.summary.value,))
         else:
           # This is a "normal" event
           event_time = next_event.dtstart.value.strftime("%H:%M")
           event_date = next_event.dtstart.value.strftime("%d.%m.%Y")
-          self.speak("Next Appointment: {event_summary} on {event_date} at {event_time}".format(event_time=event_time, event_date=event_date, event_summary=next_event.summary.value,))
+          self.speak("Next Appointment: {event_summary} on {event_date} at {event_time}"
+          .format(event_time=event_time, event_date=event_date, event_summary=next_event.summary.value,))
       
     # TODO: setAppointment
         
