@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
-from mycroft import MycroftSkill, intent_file_handler, intent_handler
+from mycroft import MycroftSkill, intent_file_handler, intent_handler, util
 from adapt.intent import IntentBuilder
 import caldav
 from datetime import date, datetime
 from icalendar import Calendar as iCal
+from icalendar import Event
 
 
 
@@ -24,13 +25,6 @@ class Calendar(MycroftSkill):
       self.calendars = self.principal.calendars()
       self.cal = self.calendars[0]
       self.log.info("USING CALENDAR: " + str(self.cal))
-
-      # placeholder for creating new events
-      self.new_Event = {
-        "description" : "placeholder description",
-        "start" : datetime.now(),
-        "allday" : True
-        }
 
     @intent_file_handler("getAppointment.intent")
     def get_next_appointment(self, message):
@@ -61,26 +55,25 @@ class Calendar(MycroftSkill):
 
 
     @intent_file_handler("createAppointment.intent")
-    def get_next_appointment(self, message):
-      self.speak("Description?", expect_response=True)
-
-    @intent_handler(IntentBuilder("createIntent").require("description"))
     def create_appointment(self, message):
-      self.log.info(message.data.get('utterance'))
-      self.new_Event[description] = message.data.get('utterance')
-      self.speak("Staring time?", expect_response=True)
+      self.speak("creating event: " + message.data.get("description") + " with start time: " + message.data.get("start"))
 
-    @intent_handler(IntentBuilder("createIntent").require("start"))
-    def create_appointment(self, message):
-      self.log.info(message.data.get('utterance'))
-      self.new_Event[start] = message.data.get('utterance')
-      self.speak("Allday?", expect_response=True)
+      # extract start date from input
+      formatted_start_date = util.parse.extract_datetime(message.data.get("start"), anchorDate=datetime.now()) 
+      self.log.info(formatted_start_date)
 
-    @intent_handler(IntentBuilder("createIntent").require("allday"))
-    def create_appointment(self, message):
-      self.log.info(message.data.get('utterance'))
-      self.new_Event[allday] = message.data.get('utterance')
-      self.speak("done", new_Event)
+      # create new iCal event
+      new_event = Event()
+      new_event.add("summary", message.data.get("description"))
+      new_event.add("dtstart", formatted_start_date[0])
+      new_event.add("dtend", date.today())
+
+      # create wrapping iCal calendar object
+      cal2 = iCal()
+      cal2.add_component(new_event)
+
+      # save new event with caldav
+      self.cal.save_event(cal2)
 
         
 def create_skill():

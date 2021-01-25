@@ -1,2 +1,3 @@
-create appointment
-create event
+create (appointment | event) {description} (from | at) {start} ( | till {end})
+
+create (appointment | event) {start} with (name | description) {description}
