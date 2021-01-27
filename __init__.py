@@ -1,27 +1,23 @@
-import os
-from dotenv import load_dotenv
 from mycroft import MycroftSkill, intent_file_handler, intent_handler
 import caldav
 from datetime import date, datetime
 from icalendar import Calendar as iCal
-
-
 
 class Calendar(MycroftSkill):
     def __init__(self):
       MycroftSkill.__init__(self)
 
     def initialize(self):
-      # get USERNAME and PASSWORD from .env
-      load_dotenv()
-      self.USERNAME = os.getenv("USERNAME")
-      self.PASSWORD = os.getenv("PASSWORD")
-      self.URL = os.getenv("URL")
+      # get USERNAME and PASSWORD from mycroft skill-settings 
+      # https://account.mycroft.ai/skills
+      USERNAME = self.settings.get('username')
+      PASSWORD = self.settings.get('password')
+      URL = self.settings.get('url')
 
       self.register_entity_file('number.entity')
 
       # open connection to calendar
-      self.client = caldav.DAVClient(url=self.URL, username=self.USERNAME, password=self.PASSWORD)
+      self.client = caldav.DAVClient(url=URL, username=USERNAME, password=PASSWORD)
       self.principal = self.client.principal()
       self.calendars = self.principal.calendars()
       self.cal = self.calendars[0]
