@@ -47,6 +47,7 @@ class Calendar(MycroftSkill):
 
         event_list.sort(key=lambda e: e.dtstart.value.strftime("%Y-%m-%d, %H:%M"))
         next_event = event_list[0]
+
         self.speak("Your next appointment is: " + self.output_event(next_event))
       else:
         self.speak("You have nothing to do!")
@@ -71,6 +72,30 @@ class Calendar(MycroftSkill):
       else:
         self.speak("You have nothing to do!")
         
+    @intent_handler('delete.event.intent')
+    def delete_event(self, message):
+      name = message.data.get('name')
+      if name:
+        events = self.cal.date_search(datetime.now())
+        if len(events) != 0:
+          event_list = []
+          for event in events:
+            e = event.instance.vevent
+            if name.lower() in e.summary.value.lower():
+              event_list.append(event)
+        
+        if len(event_list) == 1:
+          confirm_delete = self.ask_yesno('Do you want to delete {name}?'.format(name=name))
+          if confirm_delete == 'yes':
+            event_list[0].delete()
+            self.speak('Event {name} deleted.'.format(name=name))
+          else:
+            self.speak('Okay, I won\'t touch a thing')
+        else:
+          self.speak("OKBYE")
+                  
+
+
 def create_skill():
     return Calendar()
 
