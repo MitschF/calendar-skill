@@ -30,13 +30,13 @@ class Calendar(MycroftSkill):
     def output_event(self, event):
       if event.dtstart.value.strftime("%H:%M") == "00:00":
         # This is an "allday" event
-        event_date = event.dtstart.value.strftime("%d.%m.%Y")
+        event_date = event.dtstart.value.strftime("%d. of %B, %Y")
         return("{event_summary} on {event_date}"
         .format(event_date=event_date, event_summary=event.summary.value,))
       else:
         # This is a "normal" event
         event_time = event.dtstart.value.strftime("%H:%M")
-        event_date = event.dtstart.value.strftime("%d.%m.%Y")
+        event_date = event.dtstart.value.strftime("%d. of %B, %Y")
         return("{event_summary} on {event_date} at {event_time}"
         .format(event_time=event_time, event_date=event_date, event_summary=event.summary.value,))
 
