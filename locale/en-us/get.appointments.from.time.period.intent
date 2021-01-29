@@ -1,0 +1,2 @@
+(get | show) events from {start_time} ( | till {end_time})
+(get | show) events for the next ( | {amount} ) {time_period}

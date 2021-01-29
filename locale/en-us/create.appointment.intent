@@ -1,0 +1,3 @@
+create (appointment | event) {description} (from | at) {start_time} ( | till {end_time})
+
+create (appointment | event) {{start_time} with (name | description) {description}
