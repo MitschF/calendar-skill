@@ -1,3 +1,3 @@
-create (appointment | event) {description} (from | at) {start_time} ( | till {end_time})
+create (appointment | event) {description} at {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time} o'clock))
 
-create (appointment | event) {{start_time} with (name | description) {description}
+create (appointment | event) {start_date} ( | (from | starting at) {start_time} ( | till {end_time})) with (name | description) {description}

@@ -58,6 +58,7 @@ class Calendar(MycroftSkill):
     def get_appointment_from_time_period(self, message):
       # extract start time from input
       formatted_start_time = util.parse.extract_datetime(message.data.get("start_time"), anchorDate=datetime.now())
+      self.log.info("formatted start time: ") 
       self.log.info(formatted_start_time) 
 
       # extract end time from input if present
@@ -78,6 +79,7 @@ class Calendar(MycroftSkill):
         for event in events:
           e = event.instance.vevent
           event_list.append(e)
+          #self.log.info(event)
 
         event_list.sort(key=lambda e: e.dtstart.value.strftime("%Y-%m-%d, %H:%M"))
         for next_event in event_list:
@@ -93,25 +95,71 @@ class Calendar(MycroftSkill):
 
 
 
-
+    # TODO mehrtägige Events bis jetzt noch nicht unterstützt
     @intent_file_handler("create.appointment.intent")
     def create_appointment(self, message):
-      # extract start time from input
-      formatted_start_time = util.parse.extract_datetime(message.data.get("start_time"), anchorDate=datetime.now()) 
-      self.log.info(formatted_start_time)
+      description = formatted_start_date = formatted_start_time = formatted_end_time = None
 
-      # create new iCal event
+      # extract description from input if present
+      if message.data.get("description") != None:
+        description = message.data.get("description")
+        self.log.info("description: ")
+        self.log.info(description)
+      else:
+        # cancel current event creating because of missing description
+        self.speak("Creation canceled. No description for the new event was specified.")
+        return
+
+      # extract start date from input if present
+      if message.data.get("start_date") != None:
+        formatted_start_date = util.parse.extract_datetime(message.data.get("start_date"), anchorDate=datetime.now()) 
+        self.log.info("formatted start date: ")
+        self.log.info(formatted_start_date)
+      else:
+        # cancel current event creating because of missing start date
+        self.speak("Creation canceled. No starting date for the new event was specified.")
+        return
+
+      # extract start time from input if present
+      if message.data.get("start_time") != None:
+        formatted_start_time = util.parse.extract_number(message.data.get("start_time")) 
+        self.log.info("formatted start time: ")
+        self.log.info(formatted_start_time)
+
+      # extract end time from input if present
+      if message.data.get("end_time") != None:
+        formatted_end_time = util.parse.extract_number(message.data.get("end_time")) 
+        self.log.info("formatted end time: ")
+        self.log.info(formatted_end_time)
+
+
+      # create new iCal event from input wildcards
       new_event = Event()
-      new_event.add("summary", message.data.get("description"))
-      new_event.add("dtstart", formatted_start_time[0])
-      new_event.add("dtend", date.today())
+      new_event.add("summary", description)
+      
+      if formatted_start_time == None:
+        # TODO: falls besonders fleißig: rausfinden, ob Zeitangabe direkt mit Uhrzeit gemacht wurde
+              # z.b. march 1 2021 9am, wenn ja, dann nicht als ganztägig speichern
+        # no start time specified, creating all-day event
+        new_event.add("dtstart", formatted_start_date[0].date())
+        new_event.add("dtend", formatted_start_date[0].date() + timedelta(days = 1))
+      else:
+        new_event.add("dtstart", formatted_start_date[0] + timedelta(hours = formatted_start_time))
+        if formatted_end_time == None:
+          # no end time specified, creating 1 hour event
+          new_event.add("dtend", formatted_start_date[0] + timedelta(hours = formatted_start_time + 1))
+        else:
+          new_event.add("dtend", formatted_start_date[0] + timedelta(hours = formatted_end_time))
+            
 
       # create wrapping iCal calendar object
-      cal2 = iCal()
-      cal2.add_component(new_event)
+      iCal_wrapper = iCal()
+      iCal_wrapper.add_component(new_event)
 
       # save new event with caldav
-      self.cal.save_event(cal2)
+      self.cal.save_event(iCal_wrapper)
+
+      self.speak("New event created.")
 
         
 def create_skill():
