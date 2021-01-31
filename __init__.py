@@ -77,22 +77,35 @@ class Calendar(MycroftSkill):
       name = message.data.get('name')
       if name:
         events = self.cal.date_search(datetime.now())
+        event_list = {
+          "data": [],
+          "names": []
+        }
         if len(events) != 0:
-          event_list = []
           for event in events:
             e = event.instance.vevent
             if name.lower() in e.summary.value.lower():
-              event_list.append(event)
+              event_list["data"].append(event)
+              event_list["names"].append(e.summary.value)
         
-        if len(event_list) == 1:
-          confirm_delete = self.ask_yesno('Do you want to delete {name}?'.format(name=name))
+        if len(event_list["names"]) == 1:
+          confirm_delete = self.ask_yesno('do.you.want.to.delete', {'event_name': event_list["names"][0]})
           if confirm_delete == 'yes':
-            event_list[0].delete()
-            self.speak('Event {name} deleted.'.format(name=name))
+            event_list["data"][0].delete()
+            self.speak('Event {name} deleted.'.format(name=event_list["names"][0]))
           else:
             self.speak('Okay, I won\'t touch a thing')
         else:
-          self.speak("OKBYE")
+          self.speak('You have {length} events containing "{name}".'.format(name=name, length=len(event_list["names"])))
+          selection = self.ask_selection(event_list["names"], 'Which one do you want do delete?')
+          index = event_list["names"].index(selection)
+
+          confirm_delete = self.ask_yesno('do.you.want.to.delete', {'event_name': event_list["names"][index]})
+          if confirm_delete == 'yes':
+            event_list["data"][index].delete()
+            self.speak('Event {name} deleted.'.format(name=event_list["names"][index]))
+          else:
+            self.speak('Okay, I won\'t touch a thing')
                   
 
 
