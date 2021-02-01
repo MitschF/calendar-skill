@@ -23,3 +23,24 @@ Now open https://account.mycroft.ai/skills and provide the name, password and UR
 #Caldav
 #Nextcloud
 
+## possible commands to create new events
+create event "lecture" at "march 1st"
+create event "lecture" at "march 1st" starting at "9" o'clock
+create event "lecture" at "march 1st" starting at "9" o'clock till "11" o'clock
+
+create event "today" named "lecture"
+create event "today" starting at "9" o'clock with named "lecture"
+create event "today" starting at "9" o'clock till "11" o'clock named "lecture"
+
+create event "5 days from now" named "lecture"
+create event "5 days from now" starting at "9" o'clock with named "lecture"
+create event "5 days from now" starting at "9" o'clock till "11" o'clock named "lecture"
+
+create event on "tuesday" named "lecture"
+create event on "tuesday" starting at "9" o'clock named "lecture"
+create event on "tuesday" starting at "9" o'clock till "11" o'clock named "lecture"
+
+
+TODO:
+create event "lecture" at "march 1st 2021 9am"
+create event "lecture" at "march 1st 2021 9am" till "march 1st 2021 11am"
