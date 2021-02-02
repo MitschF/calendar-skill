@@ -1,1 +1,1 @@
-delete (event | appointment | ) {name}
+(delete | remove) (event | appointment | ) {name}
