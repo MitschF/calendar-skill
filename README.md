@@ -23,29 +23,6 @@ Now open https://account.mycroft.ai/skills and provide the name, password and UR
 #Caldav
 #Nextcloud
 
-## possible commands to create new events
-create event "lecture" at "march 1st"
-create event "lecture" at "march 1st" starting at "9" o'clock
-create event "lecture" at "march 1st" starting at "9" o'clock till "11" o'clock
-
-create event "today" named "lecture"
-create event "today" starting at "9" o'clock with named "lecture"
-create event "today" starting at "9" o'clock till "11" o'clock named "lecture"
-
-create event "5 days from now" named "lecture"
-create event "5 days from now" starting at "9" o'clock with named "lecture"
-create event "5 days from now" starting at "9" o'clock till "11" o'clock named "lecture"
-
-create event on "tuesday" named "lecture"
-create event on "tuesday" starting at "9" o'clock named "lecture"
-create event on "tuesday" starting at "9" o'clock till "11" o'clock named "lecture"
-
-
-
-TODO:
-create event "lecture" at "march 1st 2021 9am"
-create event "lecture" at "march 1st 2021 9am" till "march 1st 2021 11am"
-
 
 ___
 ___
@@ -143,7 +120,120 @@ Der Satz oben kann unter anderem aufgelöst werden in:
 - my next event
 - next appointment
 
-Mehr dazu aber später.
+Mehr dazu [hier](#-Intent-Organisation).
 
 #### Programmierlogik (__init__.py)
+
+## Bonusaufgaben
+
+### Terminabfrage im gewünschten Zeitraum
+Zusätzlich zur Rückgabe des nächsten Termins bietet unser Skill dem Benutzer die Möglichkeit, Termine, welche in einem bestimmten Zeitraum liegen zu erfragen. Die Funktionalität unterscheidet sich dabei nicht stark von der Hauptaufgabe. Sie wird lediglich um zwei Parameter erweitert. 
+
+Beim Abfragen der Termine eines Zeitraumes ist es notwendig, dass der Benutzer den Start- und Endzeitpunkt festlegt um die gewünschten Termine einzugrenzen. Dieser Start- und Endzeitpunkt wird im `.intent` File mit sogennanten {Wildcards} hinterlegt (z.B. "get events from {start_time} till {end_time}"). Da die Wildcards Zeitangaben beinhalten, ist ein Parser notwendig, der die Benutzereingaben in die passenden Datumsformate umwandelt, die zur Weiterverarbeitung notwendig sind. Mehr Informationen dazu in den Kapiteln [Wildcards](###-Wildcards) und [Parser](###-Parser).
+
+
+Die Terminabfrage im gewünschten Zeitraum unterstützt folgende Funktionalität: 
+- Ausgabe aller Termine vom genannten Startdatum bis zum genannten Enddatum
+- Ausgabe aller Termine im Kalender, die nach dem genannten Startdatum liegen
+
+Mögliche Erweiterungen:
+- Ausgabe aller Termine für den gennanten Zeitraum in Zeiteinheiten (z.B. "get events for the next 2 weeks")
+    - im `.intent` File bereits hinterlegt, aber noch nicht ausimplementiert 
+
+
+### Erstellung von Terminen
+Das Anlegen eines neuen Termins benötigt zusätzliche Parameter in der Benutzereingabe im Vergleich zur Terminabfrage im gewünschten Zeitraum.
+
+Durch diese zusätzlichen Parameter wird auch das `.intent` File komplizierter. Der Benutzer soll aber nicht an eine feste Sprechweise gebunden sein, wenn er einen neuen Termin anlegen will. Zum Beispiel kann ein neuer Termin sowohl über den Befehl 
+- "create appointment lecture on monday from 9 o'clock till 11 o'clock" 
+
+als auch 
+- "create appointment on monday from  9 o'clock till 11 o'clock with description lecture"
+
+erstellt werden. Damit beide Möglichkeiten unterstützt werden, wird das `.intent` File automatisch doppelt so groß.
+
+Genauso wie bei der Terminabfrage im gewünschten Zeitraum sind auch hier [Wildcards](###-Wildcards) und [Parser](###-Parser) notwendig.
+
+Die Erstellung von Terminen unterstützt folgende Funktionalität: 
+- Erstellung eines ganztätigen Termins am gennanten Tag mit gennanten Beschreibung
+- Erstellung eines Termins am gennanten Tag mit gennanten Beschreibung mit zusätzlich definiertem Start- und Endzeitpunkt
+- Erstellung eines Termins am gennanten Tag mit gennanten Beschreibung mit zusätzlich definiertem Startpunkt und 1 stündiger Dauer
+
+
+Mögliche Erweiterungen:
+- Erstellung von mehrtägigen Terminen
+- Erstellung von Todos 
+
+
+## Mycroft Zusatzfunktionen
+Für die Erfüllung der Bonusaufgaben waren einige zusätzliche Mycroft Funktionalitäten notwendig. Die wichtigsten werden in den nächsten Kapiteln beschrieben. 
+
+### Wildcards
+Wildcards können im `.intent` File an den gewünschten Stellen plaziert werden und dienen als Platzhalter für Parameter bei der Benutzereingabe. So kann zum Beispiel im `.intent` File der Satz 
+
+```delete event {name}``` 
+
+hinterlegt werden. Dabei wird automatisch die Eingabe des Benutzers, welche nach dem Wort "event" folgt in {name} abgespeichert. Im Skill selbst kann auf diesen Wert über 
+
+```name = message.data.get("name")``` 
+
+zugegriffen werden und somit zur Weiterverarbeitung an andere Funktionen übergeben werden.
+
+
+### Entity
+Zusätzlich können zu den Wildcards Entities definiert werden, welche in speziellen `.entity` Files hinterlegt werden. Ist zu einer Wildcard ein `.entity` File vorhanden, dann kann diese Wildcard nur Werte annehmen, die im `.entity` File definiert sind (ähnlich [enumeration types](https://en.wikipedia.org/wiki/Enumerated_type) die aus anderen Programmierkontexten bekannt sind). 
+
+In unserem Fall haben wird Entities genutzt, um die Eingabe von Zahlen zu beschränken. Bei der Frage an Mycroft "what are my next 11 appointments" ist die Zahl 11 eine Wildcard, die zusätzlich Teil von  ```number.entity``` ist. Das `.entity` File legt in unserem Fall nur fest, wie viele Stellen die Wildcard haben darf. In unserem Fall sind nur ein- und zweistellige Werte gültig, welche durch die beiden Werte ```#``` und ```##``` im .entity` File erlaubt werden.
+
+Entities bieten viele Möglichkeiten Benutzereingaben geziehlt einzuschränken, um auslösen von Funktionen mit falschen Eingaben zu vermeiden. Sie sind also nicht zur eigentlichen Funktionalität des Skills notwendig, helfen aber bei der Qualitätsssicherung.
+
+
+### Parser
+Da unser Skill mit einem Kalender arbeitet, werden bei Benutzereingaben oft Datumsangaben benötigt. Diese Angaben können vom Benutzer in verschiedenen Formen eigegeben werden, werden aber von den darunterliegenden Funktionen oft in einem bestimmten Format benötigt. 
+
+Wir haben dafür folgende von Mycroft erstellten [Parser](https://mycroft-core.readthedocs.io/en/latest/source/mycroft.util.parse.html) im "util"-Package verwendet. 
+
+```mycroft.util.parse.extract_datetime``` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe (z.B. zu einem Startdatum einer Terminsuche) direkt in ein [datetime](https://docs.python.org/3/library/datetime.html)-Objekt zu parsen. Dabei ist zu erwähnen, dass die Eingabe in vielen Verschiedenen Formen erkannt wird. 
+
+Mögliche Eingabeformate beispielhaft:
+- today/tomorrow
+- 5 days from today 
+- monday
+- march 1
+- march 1st
+- march 1 2021 10am
+
+```mycroft.util.parse.extract_number``` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe direkt in einen Wert vom Typ ```int``` oder ```float``` zu parsen.
+
+### Intent Organisation
+`.intent` Files können im Verlauf der Entwicklung eines Skills immer größer werden, da man dem Benutzer verschiedene Möglichkeiten angeboten will, um die Skills zu bediehnen. Um unnötige Schreibarbeit zu vermeiden bietet Mycroft [Klammer-Schreibweisen](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/padatious#parentheses-expansion) an, die simple ```either or``` Logik unterstützen. 
+
+Dabei können Klammern und senkrechte Striche ("|") verwendet werden um festzulegen, dass jeweils nur eines der beiden Elemente in der Klammer auftreten muss. Das Element vor oder nach dem senkrechten Strich kann auch weggelassen werden, um auszudrücken, dass ein Element oder "nichts" in der Benutzereingabe vorkommen darf.
+
+Hier ein Beispiel aus einem unserer Files, bei dem Klammern verschachtelt werden und zusätzlich mit Wildcards ergänzt werden.
+
+```create (appointment | event) {description} on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time} o'clock))``` 
+
+```create (appointment | event) on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time}) o'clock) with (name | description) {description}``` 
+
+Diese beiden Zeilen können mit folgenden Benutzereingaben übereinstimmen (mit Beispielhaften Werten für die Wildcards)
+
+- create event "lecture" at "march 1st"
+- create event "lecture" at "march 1st" starting at "9" o'clock
+- create event "lecture" at "march 1st" starting at "9" o'clock till "11" o'clock
+- create event "today" named "lecture"
+- create event "today" starting at "9" o'clock with named "lecture"
+- create event "today" starting at "9" o'clock till "11" o'clock named "lecture"
+- create event "5 days from now" named "lecture"
+- create event "5 days from now" starting at "9" o'clock with named "lecture"
+- create event "5 days from now" starting at "9" o'clock till "11" o'clock named "lecture"
+- create event on "tuesday" named "lecture"
+- create event on "tuesday" starting at "9" o'clock named "lecture"
+- create event on "tuesday" starting at "9" o'clock till "11" o'clock named "lecture"
+
+Dieses Beispiel zeigt die Mächtigkeit dieses Mycroft Features und die Notwendigkeit, dieses einzusetzen, wenn man einen Skill erstellen möchte, der vom Benutzer leicht bediehnbar ist. 
+
+
+
+## Fazit
 

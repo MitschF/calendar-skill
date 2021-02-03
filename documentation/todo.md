@@ -9,6 +9,8 @@ Doku:
    - Nächsten Termin zurückgeben
    - Intent Files
 
+evtl zu 3 oder zu 4 noch iCal?
+
 4. Bonusaufgaben:
    - Überblick Funktionen | Beide
      - Was können sie
@@ -21,7 +23,6 @@ Doku:
      - Intent (aber nice) | Michael
      - Parser (Doku verlinken) | Michael
      - Entity | Michael
-     - Refactoring | Michael
 
 5. Fazit
    - Gedanken, die man sich machen muss | Mitsch 
