@@ -1,5 +1,3 @@
-# <img src="https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/calendar-alt.svg" card_color="#392897" width="50" height="50" style="vertical-align:bottom"/> Calendar
-
 ## About
 Calendar app, lets the user create a new appointment
 
@@ -26,6 +24,32 @@ Now open https://account.mycroft.ai/skills and provide the name, password and UR
 
 ___
 ___
+<img src="https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/calendar-alt.svg" card_color="#392897" width="50" height="50" style="vertical-align:bottom"/>
+
+- [Dokumentation](#dokumentation)
+  - [Einen Skill anlegen](#einen-skill-anlegen)
+  - [Geheime Variablen](#geheime-variablen)
+    - [.env-Datei](#env-datei)
+    - [Mycroft Web-Oberfläche](#mycroft-web-oberfläche)
+  - [Hauptaufgabe: Nächsten Termin zurückgeben](#hauptaufgabe-nächsten-termin-zurückgeben)
+    - [Vorüberlegung](#vorüberlegung)
+    - [Programmierung](#programmierung)
+      - [Dialog (locale-Ordner)](#dialog-locale-ordner)
+      - [Programmierlogik (\_\_init\_\_.py)](#programmierlogik-__init__py)
+  - [Bonusaufgaben](#bonusaufgaben)
+    - [Terminabfrage im gewünschten Zeitraum](#terminabfrage-im-gewünschten-zeitraum)
+    - [Erstellung von Terminen](#erstellung-von-terminen)
+    - [Löschen von Terminen](#löschen-von-terminen)
+    - [Umbenennen von Terminen](#umbenennen-von-terminen)
+  - [Mycroft Zusatzfunktionen](#mycroft-zusatzfunktionen)
+    - [Wildcards](#wildcards)
+    - [Entity](#entity)
+    - [Parser](#parser)
+    - [Intent Organisation](#intent-organisation)
+    - [Dialoge](#dialoge)
+      - [Prompts](#prompts)
+      - [.dialog-Dateien](#dialog-dateien)
+  - [Fazit](#fazit)
 
 # Dokumentation
 Voraussetzung für das Nachvollziehen der einzelnen Punkte ist ein korrekt eingerichtetes Mycroft System. Wie das geht, steht [hier](https://github.com/MycroftAI/mycroft-core) beschrieben. 
@@ -104,9 +128,9 @@ Aber was soll der Assistent antworten? Wir haben uns dafür entschieden, den Nam
 - Wenn der nächste Termin nicht ganztägig ist: **"Next appointment: Lecture on 3. of February, 2021 at 14:15"**
 
 ### Programmierung
-Bei der Programmierung des Skills haben wir Gebrauch der [Mycroft Skill Struktur](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure) gemacht. Wichtig sind hier die [__init__.py](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#__init__-py), welche die tatsächliche Programmier-Logik beinhaltet, sowie der [locale-Ordner](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#vocab-dialog-and-locale-directories), in dem Dateien stehen, welche sich um den Dialog mit Mycroft kümmern. 
+Bei der Programmierung des Skills haben wir Gebrauch der [Mycroft Skill Struktur](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure) gemacht. Wichtig sind hier die [\_\_init\_\_.py](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#__init__-py), welche die tatsächliche Programmier-Logik beinhaltet, sowie der [locale-Ordner](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#vocab-dialog-and-locale-directories), in dem Dateien stehen, welche sich um den Dialog mit Mycroft kümmern. 
 #### Dialog (locale-Ordner)
-Dateien mit der Endung `.intent` beinhalten Sätze, die der Nutzer sagen soll, damit Mycroft reagiert. Dateien mit der Endung `.dialog` beinhalten Sätze, die Mycroft antwortet. Dann gibt es noch Dateien mit der Endung `.entity`. In dieser wird die "Form" einer Eingabe definiert. Die Entity-Dateien arbeiten immer zusammen mit einer .intent-Datei. [Mehr dazu hier.](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/padatious#creating-entities)
+Dateien mit der Endung `.intent` beinhalten Sätze, die der Nutzer sagen soll, damit Mycroft reagiert. Dateien mit der Endung `.dialog` beinhalten Sätze, die Mycroft antwortet. Dann gibt es noch Dateien mit der Endung `.entity`. In dieser wird die "Form" einer Eingabe definiert. Die Entity-Dateien arbeiten immer zusammen mit einer .intent-Datei. Mehr dazu im Kapitel [entity](#entity) oder in der  [offiziellen Dokumentation.](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/padatious#creating-entities)
 
 Was der Nutzer sagen muss, um den Skill zu aktivieren steht in der Datei `locale/en-us/what.is.next.intent` geschrieben. Diese beinhaltet folgendes:
 
@@ -120,16 +144,58 @@ Der Satz oben kann unter anderem aufgelöst werden in:
 - my next event
 - next appointment
 
-Mehr dazu [hier](#-Intent-Organisation).
+Mehr dazu [hier](#intent-Organisation).
 
-#### Programmierlogik (__init__.py)
+#### Programmierlogik (\_\_init\_\_.py)
+Der Code für die Hauptaufgabe ist relativ kurz und einfach: 
+```python
+@intent_file_handler('what.is.next.intent')
+def handle_what_is_next(self, message):
+    events = self.cal.date_search(datetime.now())
+    events.sort(
+        key=lambda e: e.instance.vevent.dtstart.value.strftime("%Y-%m-%d, %H:%M"))
+    if len(events) == 0:
+        self.speak("You have nothing to do!")
+    else:
+        next_event = events[0]
+        self.speak("Your next appointment is: " +
+                    self.output_event(next_event))
+```
+
+In der ersten Zeile steht ein [decorator], welchem eine .intent-Datei mitgegeben wird. Wird nun eine der Zeilen erkannt, wird die Funktion `handle_what_is_next()` ausgeführt.
+
+Innerhalb der Funktion werden jetzt alle Termine beginnend mit dem heutigen Datum aus dem Kalender geholt. Diese sind standartmäßig nicht nach Datum sortiert, sondern nach Anlege-Reihenfolge. Im nächsten Schritt sortieren wir unsere Liste also nach Datum und Uhrzeit der einzelnen Events.
+
+Wenn die Anzahl der Event gleich null ist, antwortet Mycroft mit **"You have nothing to do!"**
+Wenn die Anzahl jedoch ungleich null ist, dann antwortet Mycroft mit dem nächsten Termin.
+
+Um zwischen ganztägig und nicht ganztägig zu unterscheiden und entsprechend zu formatieren, haben wir eine Funktion `output_event()` geschrieben.
+
+```python
+def output_event(self, event):
+    e = event.instance.vevent
+    if e.dtstart.value.strftime("%H:%M") == "00:00":
+        self.log.info(type(event))
+        # This is an "allday" event
+        event_date = e.dtstart.value.strftime("%d. of %B, %Y")
+        return("{event_summary} on {event_date}"
+                .format(event_date=event_date, event_summary=e.summary.value, ))
+    else:
+        # This is a "normal" event
+        event_time = e.dtstart.value.strftime("%H:%M")
+        event_date = e.dtstart.value.strftime("%d. of %B, %Y")
+        return("{event_summary} on {event_date} at {event_time}"
+                .format(event_time=event_time, event_date=event_date, event_summary=e.summary.value, ))
+```
+
+Diese Funktion gibt nun einen Satz gemäß der [Vorüberlegung](#vorüberlegung) zurück.
 
 ## Bonusaufgaben
 
 ### Terminabfrage im gewünschten Zeitraum
 Zusätzlich zur Rückgabe des nächsten Termins bietet unser Skill dem Benutzer die Möglichkeit, Termine, welche in einem bestimmten Zeitraum liegen zu erfragen. Die Funktionalität unterscheidet sich dabei nicht stark von der Hauptaufgabe. Sie wird lediglich um zwei Parameter erweitert. 
 
-Beim Abfragen der Termine eines Zeitraumes ist es notwendig, dass der Benutzer den Start- und Endzeitpunkt festlegt um die gewünschten Termine einzugrenzen. Dieser Start- und Endzeitpunkt wird im `.intent` File mit sogennanten {Wildcards} hinterlegt (z.B. "get events from {start_time} till {end_time}"). Da die Wildcards Zeitangaben beinhalten, ist ein Parser notwendig, der die Benutzereingaben in die passenden Datumsformate umwandelt, die zur Weiterverarbeitung notwendig sind. Mehr Informationen dazu in den Kapiteln [Wildcards](###-Wildcards) und [Parser](###-Parser).
+Beim Abfragen der Termine eines Zeitraumes ist es notwendig, dass der Benutzer den Start- und Endzeitpunkt festlegt um die gewünschten Termine einzugrenzen. Dieser Start- und Endzeitpunkt wird im `.intent` File mit sogennanten {Wildcards} hinterlegt (z.B. "get events from {start_time} till {end_time}"). Da die Wildcards Zeitangaben beinhalten, ist ein Parser notwendig, der die Benutzereingaben in die passenden Datumsformate umwandelt, die zur Weiterverarbeitung notwendig sind. Mehr Informationen dazu in den Kapiteln [Wildcards](#wildcards) und [Parser](#parser).
 
 
 Die Terminabfrage im gewünschten Zeitraum unterstützt folgende Funktionalität: 
@@ -138,7 +204,7 @@ Die Terminabfrage im gewünschten Zeitraum unterstützt folgende Funktionalität
 
 Mögliche Erweiterungen:
 - Ausgabe aller Termine für den gennanten Zeitraum in Zeiteinheiten (z.B. "get events for the next 2 weeks")
-    - im `.intent` File bereits hinterlegt, aber noch nicht ausimplementiert 
+  - im `.intent` File bereits hinterlegt, aber noch nicht ausimplementiert 
 
 
 ### Erstellung von Terminen
@@ -164,6 +230,50 @@ Mögliche Erweiterungen:
 - Erstellung von mehrtägigen Terminen
 - Erstellung von Todos 
 
+### Löschen von Terminen
+Auch für das Löschen eines Termins ist viel Überlegung im voraus nötig, obwohl man scheinbar nur ein Argument, einen Namen braucht. In der Praxis muss eine solche Funktion allerdings viel flexibler sein. Das Eingeben des genauen und vollständigen Namens würde Fehler reduzieren, gleichzeitig wären einige Termine aber auch schier unmöglich zu löschen. Ein Beispiel für einen solchen Termin wären die Vorlesungen der HdM. Die Vorlesung "Speech Interaction" wird im Kalender angelegt unter dem Namen: 
+```
+Speech Interaction (113457a), Speech Interaction (113457a), Speech Interaction (113457a)
+```
+Dies ist für den Nutzer unmöglich vollständig aufzusagen. Die Lösung: der `in` Operator in Python.
+```python
+print("speech" in "speech interaction")
+# true
+```
+
+Von hier an gibt es 3 Möglichkeiten:
+1. Mycroft findet keine entsprechenden Events
+2. Mycroft findet genau ein Event
+3. Mycroft findet mehr als ein Event
+
+Im ersten Fall antwortet Mycroft mit `You have no events containing "{name}"`.
+
+Im zweiten Fall fragt Mycroft direkt, ob man das Event XYZ löschen möchte. Diese Frage kann vom Nutzer bejaht oder verneint werden.
+
+Der dritte Fall ist etwas schwieriger. Hier muss Mycroft nun alle möglichen Veranstaltungen aufsagen. Der Nutzer muss sich nun ein Event wählen, worauf die Bestätigungsfrage von Mycroft kommt.
+
+In der Praxis sieht das wie folgt aus: 
+```
+>>> U: Delete Event Vorlesung
+>>> M: You have 2 events containing Vorlesung.
+>>> M: Vorlesung SI or Vorlesung Mathe
+>>> M: Whitch one do you want to delete?
+>>> U: Vorlesung SI 
+ODER:
+>>> U: The first one
+>>> M: Do you really want to delete Vorlesung SI
+>>> U: Yes
+>>> M: Event Vorlesung SI deleted.
+```
+*U = User; M = Mycroft*
+
+Mögliche Erweiterungen und Verbesserungen:
+- Das Datum der Möglichen Events könnte noch erwähnt werden (falls mehrere Termine den exakt gleichen Namen haben)
+- Die Anzahl der Möglichkeiten ist aktuell noch nicht beschränkt. Hat der Nutzer 50 mal den gleichen Termin, zählt Mycroft diesen auch 50 mal auf
+- Möglichkeit, Termine ohne Namen zu Löschen (`Delete my next event`) noch nicht implementiert
+
+### Umbenennen von Terminen
+Das Umbennenen eines Termins ist ähnlich zum Löschen. Es wird lediglich ein weiterer Parameter `new_name` mitgegeben. Das erkennen des richtigen Termins erfolgt wie bereits beim Löschen. Die möglichen Erweiterungen und Verbesserungen treffen auch hier zu.
 
 ## Mycroft Zusatzfunktionen
 Für die Erfüllung der Bonusaufgaben waren einige zusätzliche Mycroft Funktionalitäten notwendig. Die wichtigsten werden in den nächsten Kapiteln beschrieben. 
@@ -183,10 +293,11 @@ zugegriffen werden und somit zur Weiterverarbeitung an andere Funktionen überge
 ### Entity
 Zusätzlich können zu den Wildcards Entities definiert werden, welche in speziellen `.entity` Files hinterlegt werden. Ist zu einer Wildcard ein `.entity` File vorhanden, dann kann diese Wildcard nur Werte annehmen, die im `.entity` File definiert sind (ähnlich [enumeration types](https://en.wikipedia.org/wiki/Enumerated_type) die aus anderen Programmierkontexten bekannt sind). 
 
-In unserem Fall haben wird Entities genutzt, um die Eingabe von Zahlen zu beschränken. Bei der Frage an Mycroft "what are my next 11 appointments" ist die Zahl 11 eine Wildcard, die zusätzlich Teil von  ```number.entity``` ist. Das `.entity` File legt in unserem Fall nur fest, wie viele Stellen die Wildcard haben darf. In unserem Fall sind nur ein- und zweistellige Werte gültig, welche durch die beiden Werte ```#``` und ```##``` im .entity` File erlaubt werden.
+In unserem Fall haben wird Entities genutzt, um die Eingabe von Zahlen zu beschränken. Bei der Frage an Mycroft "what are my next 11 appointments" ist die Zahl 11 eine Wildcard, die zusätzlich Teil von  `number.entity` ist. Die Datei `number.entity` beinhaltet lediglich zwei Zeilen, mit den Inhalten `#` und `##`. Das Zeichen `#` steht für eine beliebige Ziffer von 0 bis 9. Mycroft akzeptiert an der Stelle also nur ein- bis zweistellige Nummern. Außerdem werden die Zahlen direkt in die richtige Form gebracht. Aus dem Satz `What are my next three appointments?` erkennt Mycroft die Zahl `three` und bringt sie in die Form `3`.
 
-Entities bieten viele Möglichkeiten Benutzereingaben geziehlt einzuschränken, um auslösen von Funktionen mit falschen Eingaben zu vermeiden. Sie sind also nicht zur eigentlichen Funktionalität des Skills notwendig, helfen aber bei der Qualitätsssicherung.
+Entities bieten viele Möglichkeiten, Benutzereingaben gezielt einzuschränken, um das Auslösen von Funktionen mit falschen Eingaben zu vermeiden. Sie sind also nicht zur eigentlichen Funktionalität des Skills notwendig, helfen aber bei der Qualitätsssicherung.
 
+Gute Beispiele für die Lösung mit Entities sind Telefonnummern und Adressen.
 
 ### Parser
 Da unser Skill mit einem Kalender arbeitet, werden bei Benutzereingaben oft Datumsangaben benötigt. Diese Angaben können vom Benutzer in verschiedenen Formen eigegeben werden, werden aber von den darunterliegenden Funktionen oft in einem bestimmten Format benötigt. 
@@ -233,7 +344,40 @@ Diese beiden Zeilen können mit folgenden Benutzereingaben übereinstimmen (mit 
 
 Dieses Beispiel zeigt die Mächtigkeit dieses Mycroft Features und die Notwendigkeit, dieses einzusetzen, wenn man einen Skill erstellen möchte, der vom Benutzer leicht bediehnbar ist. 
 
+### Dialoge
+Mithilfe der .intent-Dateien kann man es dem Nutzer einfach machen, komplexe Sätze zu erstellen, die Mycroft weiter verarbeiten kann. Manchmal möchte man jedoch lieber einen Dialog erzeugen. 
 
+#### Prompts
+Link zur [Dokumentation](https://mycroft-ai.gitbook.io/docs/skill-development/user-interaction/prompts)
+
+Ein mögliches Beispiel für die Kalender-Anwendung wäre:
+```
+>>> U: Create new Event!
+>>> M: What should be the name?
+>>> U: Vorlesung SI
+>>> M: When should Vorlesung SI start?
+>>> U: Next Monday
+>>> M: Okay, event "Vorlesung SI" on monday created.
+```
+*U = User; M = Mycroft; Beispiel nicht implementiert*
+
+Mycroft bietet die Möglichkeit, [Ja/Nein-Fragen](https://mycroft-ai.gitbook.io/docs/skill-development/user-interaction/prompts#yes-no-questions), sowie [Auswahlmöglichkeiten](https://mycroft-ai.gitbook.io/docs/skill-development/user-interaction/prompts#providing-a-list-of-options) zu geben. Beim Löschen und umbenennen der Termine haben wir gebrauch von beiden Funktionen gemacht.
+
+#### .dialog-Dateien
+Damit sich das Mycroft-System "menschlicher" anfühlt, gibt es die Möglichkeit, Antworten dynamischer zu gestalten. Um dies zu erreichen machen wir gebrauch der `.dialog`-Dateien. Diese sind ähnlich aufgebaut wie die `.intent`-Dateien und können auch mit Variablen versehen werden. Ein Beispiel für eine solche Datei findet man im Bestätigungsdialog zum Löschen eines Events.
+
+```
+Do you really want to delete {event_name}?
+Do you want do delete {event_name}?
+Should I erase {event_name} from your calendar?
+```
+*Inhalt der Datei: do.you.want.to.delete.dialog*
+
+In der `__init__.py` wird die Datei wie folgt aufgerufen:
+```python
+confirm_delete = self.ask_yesno('do.you.want.to.delete', {'event_name': event_names[i]})
+```
+Sie kann genau so auch mit der Funktion `self.speak()` aufgerufen werden. Das mitgegebene Dictionary beinhaltet den Wert der Variable.
 
 ## Fazit
 

@@ -232,7 +232,7 @@ class Calendar(MycroftSkill):
 
                 def rename_event(self, i):
                     """
-                    Deletes event at given index
+                    Renames event at given index
 
                     Args:
                         i (number): Index of events-List
