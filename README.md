@@ -1,24 +1,8 @@
-## About
-Calendar app, lets the user create a new appointment
-
-## Getting started
-For this skill to work you need to have a working mycroft system.
-
-Type the following commands to install the skill:
-```
-cd <PATH-TO-MYCROFT-CORE>
-source .venv/bin/activate
-msm install https://github.com/MitschF/calendar-skill
-```
-
-Now open https://account.mycroft.ai/skills and provide the name, password and URL to the skill settings. 
-
-
 <img src="https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/calendar-alt.svg" card_color="#392897" width="50" height="50" style="vertical-align:bottom"/>
-<span style="font-size: 35px">Mycoft Kalender-Skill</span>
+<span >Mycoft Kalender-Skill</span>
+<hr>
 
-_____
-
+- [Installieren des Skills](#installieren-des-skills)
 - [Dokumentation](#dokumentation)
   - [Einen Skill anlegen](#einen-skill-anlegen)
   - [Geheime Variablen](#geheime-variablen)
@@ -43,6 +27,19 @@ _____
       - [Prompts](#prompts)
       - [.dialog-Dateien](#dialog-dateien)
   - [Fazit](#fazit)
+
+
+# Installieren des Skills
+Damit dieser Skill funktioniert, benötigen Sie ein funktionierendes Mycroft-System.
+
+Geben Sie die folgenden Befehle ein, um den Skill zu installieren:
+```
+cd <PATH-TO-MYCROFT-CORE>
+source .venv/bin/activate
+msm install https://github.com/MitschF/calendar-skill
+```
+
+Öffnen Sie nun https://account.mycroft.ai/skills und geben Sie den Namen, das Passwort und die URL zu den Skill-Einstellungen an. 
 
 # Dokumentation
 Voraussetzung für das Nachvollziehen der einzelnen Punkte ist ein korrekt eingerichtetes Mycroft System. Wie das geht, steht [hier](https://github.com/MycroftAI/mycroft-core) beschrieben. 
@@ -119,6 +116,8 @@ Es gibt keine Parameter, wie Datum, Uhrzeit oder Anzahl der Antworten, da konkre
 Aber was soll der Assistent antworten? Wir haben uns dafür entschieden, den Namen des nächsten Termins, sowie Datum und bei Bedarf die Uhrzeit zurückzugeben. Eine antwort würde also wie folgt aussehen:
 - Wenn der nächste Termin ganztägig ist: **"Next appointment: Christmas on 24. of December, 2021"**
 - Wenn der nächste Termin nicht ganztägig ist: **"Next appointment: Lecture on 3. of February, 2021 at 14:15"**
+
+Wir haben uns dafür entschieden, über die Python-Module [caldav](https://github.com/python-caldav/caldav) und [iCalendar](https://github.com/collective/icalendar) auf den Nextcloud-Kalender zuzugreifen.
 
 ### Programmierung
 Bei der Programmierung des Skills haben wir Gebrauch der [Mycroft Skill Struktur](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure) gemacht. Wichtig sind hier die [\_\_init\_\_.py](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#__init__-py), welche die tatsächliche Programmier-Logik beinhaltet, sowie der [locale-Ordner](https://mycroft-ai.gitbook.io/docs/skill-development/skill-structure#vocab-dialog-and-locale-directories), in dem Dateien stehen, welche sich um den Dialog mit Mycroft kümmern. 
@@ -211,7 +210,7 @@ als auch
 
 erstellt werden. Damit beide Möglichkeiten unterstützt werden, wird das `.intent` File automatisch doppelt so groß.
 
-Genauso wie bei der Terminabfrage im gewünschten Zeitraum sind auch hier [Wildcards](###-Wildcards) und [Parser](###-Parser) notwendig.
+Genauso wie bei der Terminabfrage im gewünschten Zeitraum sind auch hier [Wildcards](#wildcards) und [Parser](#parser) notwendig.
 
 Die Erstellung von Terminen unterstützt folgende Funktionalität: 
 - Erstellung eines ganztätigen Termins am gennanten Tag mit gennanten Beschreibung
@@ -261,7 +260,7 @@ ODER:
 *U = User; M = Mycroft*
 
 Mögliche Erweiterungen und Verbesserungen:
-- Das Datum der Möglichen Events könnte noch erwähnt werden (falls mehrere Termine den exakt gleichen Namen haben)
+- Das Datum der möglichen Events könnte noch erwähnt werden (falls mehrere Termine den exakt gleichen Namen haben)
 - Die Anzahl der Möglichkeiten ist aktuell noch nicht beschränkt. Hat der Nutzer 50 mal den gleichen Termin, zählt Mycroft diesen auch 50 mal auf
 - Möglichkeit, Termine ohne Namen zu Löschen (`Delete my next event`) noch nicht implementiert
 
@@ -274,11 +273,15 @@ Für die Erfüllung der Bonusaufgaben waren einige zusätzliche Mycroft Funktion
 ### Wildcards
 Wildcards können im `.intent` File an den gewünschten Stellen plaziert werden und dienen als Platzhalter für Parameter bei der Benutzereingabe. So kann zum Beispiel im `.intent` File der Satz 
 
-```delete event {name}``` 
+```
+delete event {name}
+``` 
 
 hinterlegt werden. Dabei wird automatisch die Eingabe des Benutzers, welche nach dem Wort "event" folgt in {name} abgespeichert. Im Skill selbst kann auf diesen Wert über 
 
-```name = message.data.get("name")``` 
+```
+name = message.data.get("name")
+``` 
 
 zugegriffen werden und somit zur Weiterverarbeitung an andere Funktionen übergeben werden.
 
@@ -297,7 +300,7 @@ Da unser Skill mit einem Kalender arbeitet, werden bei Benutzereingaben oft Datu
 
 Wir haben dafür folgende von Mycroft erstellten [Parser](https://mycroft-core.readthedocs.io/en/latest/source/mycroft.util.parse.html) im "util"-Package verwendet. 
 
-```mycroft.util.parse.extract_datetime``` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe (z.B. zu einem Startdatum einer Terminsuche) direkt in ein [datetime](https://docs.python.org/3/library/datetime.html)-Objekt zu parsen. Dabei ist zu erwähnen, dass die Eingabe in vielen Verschiedenen Formen erkannt wird. 
+`mycroft.util.parse.extract_datetime` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe (z.B. zu einem Startdatum einer Terminsuche) direkt in ein [datetime](https://docs.python.org/3/library/datetime.html)-Objekt zu parsen. Dabei ist zu erwähnen, dass die Eingabe in vielen Verschiedenen Formen erkannt wird. 
 
 Mögliche Eingabeformate beispielhaft:
 - today/tomorrow
@@ -307,18 +310,20 @@ Mögliche Eingabeformate beispielhaft:
 - march 1st
 - march 1 2021 10am
 
-```mycroft.util.parse.extract_number``` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe direkt in einen Wert vom Typ ```int``` oder ```float``` zu parsen.
+`mycroft.util.parse.extract_number` kann zusammen mit einer Wildcard dazu verwendet werden, eine Benutzereingabe direkt in einen Wert vom Typ `int` oder `float` zu parsen.
 
 ### Intent Organisation
-`.intent` Files können im Verlauf der Entwicklung eines Skills immer größer werden, da man dem Benutzer verschiedene Möglichkeiten angeboten will, um die Skills zu bediehnen. Um unnötige Schreibarbeit zu vermeiden bietet Mycroft [Klammer-Schreibweisen](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/padatious#parentheses-expansion) an, die simple ```either or``` Logik unterstützen. 
+`.intent` Files können im Verlauf der Entwicklung eines Skills immer größer werden, da man dem Benutzer verschiedene Möglichkeiten angeboten will, um die Skills zu bediehnen. Um unnötige Schreibarbeit zu vermeiden bietet Mycroft [Klammer-Schreibweisen](https://mycroft-ai.gitbook.io/docs/mycroft-technologies/padatious#parentheses-expansion) an, die simple `either or` Logik unterstützen. 
 
 Dabei können Klammern und senkrechte Striche ("|") verwendet werden um festzulegen, dass jeweils nur eines der beiden Elemente in der Klammer auftreten muss. Das Element vor oder nach dem senkrechten Strich kann auch weggelassen werden, um auszudrücken, dass ein Element oder "nichts" in der Benutzereingabe vorkommen darf.
 
 Hier ein Beispiel aus einem unserer Files, bei dem Klammern verschachtelt werden und zusätzlich mit Wildcards ergänzt werden.
 
-```create (appointment | event) {description} on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time} o'clock))``` 
+```
+create (appointment | event) {description} on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time} o'clock))
 
-```create (appointment | event) on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time}) o'clock) with (name | description) {description}``` 
+create (appointment | event) on {start_date} ( | (from | starting at) {start_time} o'clock ( | till {end_time}) o'clock) with (name | description) {description}
+``` 
 
 Diese beiden Zeilen können mit folgenden Benutzereingaben übereinstimmen (mit Beispielhaften Werten für die Wildcards)
 
@@ -374,3 +379,10 @@ Sie kann genau so auch mit der Funktion `self.speak()` aufgerufen werden. Das mi
 
 ## Fazit
 
+Das Arbeiten am Mycroft-Projekt hat viel Spaß gemacht. Es ist erstaunlich zu sehen, mit wie wenig Initialaufwand ein solcher Skill erstellt ist. Eine Hauptbeobachtung war, dass der eigentliche Programmieraufwand wesentlich geringer war, als die Überlegungen, welche im Voraus gemacht werden mussten. Besonders die Bedienung von Mycroft seitens des Nutzers stellte uns vor viele Möglichkeiten, bei denen es abzuwägen galt: 
+
+Die Erstellung der `.intent`-Dateien gestaltet sich als ein Fass ohne Boden und auch die Ausarbeitung der Dialoge stellt einen vor schier endlos viele Varianten. Der Nutzer sollte einen Skill intuitiv bedienen können, ohne dafür extra eine Dokumentation öffnen zu müssen. Dafür müssen aber alle möglichen Fälle der Nutzer-Eingabe abgedeckt sein.
+
+Für das Projekt haben wir beide Arten der Interaktion (sowohl Dialog, als auch intent) zu einem gewissen Grad abgedeckt. Um Vollständigkeit zu gewährleisten, muss jedoch wesentlich mehr Zeit investiert werden.
+
+Gegenüber dem üblichen Abarbeiten von Hochschul-Aufgaben, die genau eine mögliche Antwort zulassen, hat uns das "Basteln" am Mycroft-Projekt viel Freude bereitet und Interesse geweckt. 
