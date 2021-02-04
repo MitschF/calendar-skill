@@ -13,18 +13,11 @@ msm install https://github.com/MitschF/calendar-skill
 
 Now open https://account.mycroft.ai/skills and provide the name, password and URL to the skill settings. 
 
-## Tags
-#Calendar
-#Appoinment
-#Event
-#Assistant
-#Caldav
-#Nextcloud
 
-
-___
-___
 <img src="https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/calendar-alt.svg" card_color="#392897" width="50" height="50" style="vertical-align:bottom"/>
+<span style="font-size: 35px">Mycoft Kalender-Skill</span>
+
+_____
 
 - [Dokumentation](#dokumentation)
   - [Einen Skill anlegen](#einen-skill-anlegen)
